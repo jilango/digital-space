@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>VisaBridge: Rule-based Visa Readiness</title>
+<meta name="robots" content="noindex, nofollow" />
+<style>
+  :root{
+    /* Dark theme inspired by Lighthouse HQ */
+    --bg:#0b1220;            /* page background */
+    --panel:#0f172a;         /* cards/panels */
+    --panel-2:#0c1426;       /* hero gradient stop */
+    --ink:#e6eaf5;           /* primary text */
+    --muted:#95a0b8;         /* secondary text */
+    --border:#1e293b;        /* subtle borders */
+    --brand:#6e8cff;         /* primary accent (indigo-ish) */
+    --brand-600:#5a76ff;
+    --brand-700:#4a62e5;
+    --success:#34d399;
+    --warn:#f59e0b;
+    --error:#ef4444;
+    --radius:14px;
+    --shadow:0 12px 40px rgba(0,0,0,.35);
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  }
+  a{color:var(--brand); text-decoration:none}
+  a:focus,button:focus,input:focus,select:focus,textarea:focus{
+    outline:3px solid rgba(110,140,255,.45); outline-offset:2px
+  }
+  .container{max-width:1180px;margin:0 auto;padding:24px}
+
+  /* Header (dark, minimal) */
+  header.app{
+    position:sticky; top:0; z-index:20;
+    background:linear-gradient(180deg, rgba(12,20,38,.9), rgba(12,20,38,.65));
+    backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--border)
+  }
+  .app-inner{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 24px}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand-mark{
+    width:28px;height:28px;border-radius:8px;
+    background:linear-gradient(135deg,var(--brand),var(--brand-600));
+    box-shadow:0 6px 18px rgba(110,140,255,.45)
+  }
+  .brand h1{margin:0;font-size:18px;letter-spacing:.2px;color:#f1f4ff}
+
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap}
+  .btn{
+    appearance:none; border:1px solid var(--border); background:transparent; color:var(--ink);
+    border-radius:10px; padding:10px 14px; font-weight:800; cursor:pointer
+  }
+  .btn.primary{background:var(--brand); color:#0b0f1a; border-color:transparent}
+  .btn.primary:hover{background:var(--brand-600)}
+  .btn:hover{border-color:#31405a}
+  .muted{color:var(--muted);font-size:13px}
+
+  /* Hero (dark glass with soft glow) */
+  .hero{
+    background:
+      radial-gradient(900px 340px at 72% -40%, rgba(110,140,255,.20), transparent 60%),
+      linear-gradient(180deg, rgba(20,28,48,.85), rgba(12,20,38,.80));
+    border:1px solid var(--border);
+    border-radius:20px; box-shadow:var(--shadow); padding:36px 28px; margin-top:18px;
+    display:grid; gap:12px; align-items:center
+  }
+  .eyebrow{font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:#bfc9ff; font-weight:900}
+  .hero h2{margin:0; font-size:30px; line-height:1.15; letter-spacing:-.3px; color:#f6f8ff}
+  .hero p{margin:0; color:var(--muted); font-size:15px}
+  .hero .cta{display:flex; gap:12px; flex-wrap:wrap; margin-top:10px}
+  @media (min-width:900px){
+    .hero{grid-template-columns:1.3fr .7fr}
+    .hero-visual{
+      min-height:140px; border-left:1px solid var(--border); padding-left:24px; display:grid; align-content:center; gap:12px
+    }
+    .hero-stat{
+      display:flex; align-items:center; gap:12px; padding:10px 12px;
+      background:linear-gradient(180deg,#0f172a,#0c1426); border:1px solid var(--border);
+      border-radius:12px; box-shadow:0 8px 28px rgba(0,0,0,.28)
+    }
+    .hero-dot{width:10px;height:10px;border-radius:999px;background:var(--brand); box-shadow:0 0 16px rgba(110,140,255,.65)}
+    .hero-stat strong{font-size:14px; color:#e9edff}
+    .hero-stat span{font-size:12px;color:var(--muted)}
+  }
+
+  /* Grid */
+  main.grid{display:grid;gap:24px;padding-top:16px;grid-template-columns:1.75fr 1fr;align-items:start}
+  @media (max-width:960px){main.grid{grid-template-columns:1fr}}
+
+  /* Cards / panels */
+  .panel{
+    background:linear-gradient(180deg,#0f172a,#0c1426);
+    border:1px solid var(--border); border-radius:16px; box-shadow:var(--shadow); align-self:start
+  }
+  .panel .content{padding:22px}
+  .right-card{border-radius:14px}
+
+  /* Headings (confident uppercase subheads) */
+  .section + .section{margin-top:18px}
+  .section h2{
+    font-size:12.5px; margin:0 0 8px 0; letter-spacing:.14em; text-transform:uppercase; color:#bfc9ff; font-weight:900
+  }
+  .section p.desc{margin:0 0 12px 0;color:var(--muted);font-size:13px}
+
+  /* Form */
+  .fields{display:grid;gap:12px}
+  .row-2{display:grid;gap:12px;grid-template-columns:1fr 1fr}
+  @media (max-width:720px){.row-2{grid-template-columns:1fr}}
+  .field{display:grid;gap:6px}
+  label{font-size:13px;font-weight:800;letter-spacing:.02em;color:#dfe6ff}
+  .hint{font-size:12px;color:var(--muted)}
+  input[type="number"],input[type="text"],input[type="date"],select{
+    border:1px solid var(--border); border-radius:10px; padding:12px 12px; font-size:14px; width:100%;
+    color:var(--ink);
+    background:linear-gradient(180deg,#0c1426,#0a1222)
+  }
+  input::placeholder{color:#7d89a3}
+
+  /* Summary / snapshot */
+  .summary{position:sticky;top:86px}
+  .pill{
+    display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;font-size:11.5px;border:1px solid var(--border);
+    font-weight:900; letter-spacing:.06em; text-transform:uppercase; background:#0b1220; color:#c8d2f0
+  }
+  .pill.success{background:rgba(52,211,153,.10);color:#34d399;border-color:rgba(52,211,153,.35)}
+  .pill.warn{background:rgba(245,158,11,.10);color:#f59e0b;border-color:rgba(245,158,11,.35)}
+  .pill.error{background:rgba(239,68,68,.10);color:#ef4444;border-color:rgba(239,68,68,.35)}
+
+  .criteria-list{display:grid;gap:8px}
+  .criteria-item{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    border:1px solid var(--border); border-radius:12px; padding:10px 12px;
+    background:linear-gradient(180deg,#0e1628,#0a1222)
+  }
+  .criteria-item span{color:#d6def7}
+  details.panel > summary{
+    list-style:none; cursor:pointer; display:flex; align-items:center; justify-content:space-between;
+    gap:12px; padding:14px 0; font-weight:900; color:#f1f4ff
+  }
+  details.panel summary::-webkit-details-marker{display:none}
+  #counts-O1A,#counts-EB1A,#counts-EB2NIW,#counts-H1B{font-weight:800;color:#9fb0d8}
+
+  /* Sidebar actions */
+  .side-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+  .btn.outline{background:transparent;border-color:#34455f}
+
+
+/* ===== VisaBridge dark-mode polish (paste AFTER existing styles) ===== */
+
+/* 1) Harmonize colors for legibility + consistency */
+:root{
+  --ink:#e8ecff;              /* primary text (softer white) */
+  --muted:#9aa6c6;            /* secondary text */
+  --border:#22314d;           /* subtle border */
+  --field-bg:#0c1527;         /* inputs/select background */
+  --field-bg-hover:#0e1a31;
+  --field-border:#20304b;
+  --field-focus:#6e8cff;      /* focus ring/brand accent */
+}
+
+/* Base text tones */
+body { color: var(--ink); }
+label { color:#dfe6ff; }
+.hint, .muted { color: var(--muted); }
+
+/* 2) Inputs & SELECT: minimal dark-mode controls */
+input[type="number"],
+input[type="text"],
+input[type="date"],
+select{
+  background: var(--field-bg);
+  color: var(--ink);
+  border: 1px solid var(--field-border);
+  border-radius: 12px;
+  padding: 12px 12px;
+  height: 44px;
+  outline: none;
+  transition: border-color .15s ease, background .15s ease, box-shadow .15s ease;
+}
+input[type="number"]:hover,
+input[type="text"]:hover,
+input[type="date"]:hover,
+select:hover{
+  background: var(--field-bg-hover);
+  border-color: var(--border);
+}
+input[type="number"]:focus,
+input[type="text"]:focus,
+input[type="date"]:focus,
+select:focus{
+  border-color: var(--field-focus);
+  box-shadow: 0 0 0 3px rgba(110,140,255,.20);
+}
+
+/* Minimal select with custom chevron (no extra HTML needed) */
+select{
+  /* cross-browser reset */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+
+  /* room for the chevron */
+  padding-right: 36px;
+
+  /* inline SVG arrow */
+  background-image:
+    url("data:image/svg+xml;utf8,\
+      <svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239fb0d8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>\
+        <polyline points='6 9 12 15 18 9'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 14px;
+}
+
+/* Fix Safari/Firefox quirks */
+select::-ms-expand{ display:none; }                 /* old IE/Edge */
+@supports (-moz-appearance:none){
+  select{ padding-right: 40px; }                    /* Firefox spacing */
+}
+input::placeholder{ color:#7d89a3; }
+
+/* 3) Snapshot cards (accordion) spacing/padding tweaks */
+.criteria-list{ gap: 12px; }
+.criteria-item{
+  padding: 14px 14px;
+  border-radius: 12px;
+}
+
+details.panel > summary{
+  padding: 18px 0;                                  /* was tighter */
+  line-height: 1.25;
+}
+details.panel.right-card .content{
+  padding: 18px 22px;                               /* breathe inside */
+}
+
+/* 4) Panel & field rhythm for form sections */
+.panel .content{ padding: 24px; }                   /* slightly larger default */
+.fields{ gap: 14px; }
+.row-2{ gap: 14px; }
+
+/* 5) Header buttons: keep them readable on dark glass */
+header .btn{ border-color:#2a3a5a; }
+header .btn:hover{ border-color:#3a4c73; }
+
+
+
+
+/* === Snapshot (accordion) – roomier left/right + item spacing === */
+aside[aria-label="Readiness Summary"] details.panel.right-card > summary{
+  padding: 20px 28px !important;   /* increase L/R padding on the clickable bar */
+}
+aside[aria-label="Readiness Summary"] details.panel.right-card .content{
+  padding: 22px 28px 24px !important;  /* more L/R padding inside expanded body */
+}
+aside[aria-label="Readiness Summary"] details.panel.right-card + details.panel.right-card{
+  margin-top: 12px;                 /* a little vertical space between accordions */
+}
+.criteria-list{ gap: 14px !important; }
+.criteria-item{ padding: 16px 18px !important; }
+
+/* === Date inputs – force consistent text color (WebKit + Firefox) === */
+input[type="date"]{
+  color: var(--ink) !important;
+  -webkit-text-fill-color: var(--ink) !important;  /* Safari/Chrome */
+  caret-color: var(--ink);
+}
+/* WebKit internal date pieces */
+input[type="date"]::-webkit-datetime-edit,
+input[type="date"]::-webkit-datetime-edit-text,
+input[type="date"]::-webkit-datetime-edit-month-field,
+input[type="date"]::-webkit-datetime-edit-day-field,
+input[type="date"]::-webkit-datetime-edit-year-field{
+  color: var(--ink) !important;
+}
+/* Firefox */
+input[type="]()
+
+
+
+
+</style>
+
+
+
+</head>
+<body>
+  <!-- Header: ONLY Get Started, Reset, Load Demo -->
+  <header class="app" role="banner">
+    <div class="app-inner container">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true"></div>
+        <h1>VisaBridge</h1>
+      </div>
+      <div class="toolbar" role="group" aria-label="Actions">
+        <button class="btn primary" id="getStartedBtnHeader">Get Started</button>
+        <button class="btn" id="resetBtnHeader">Reset</button>
+        <button class="btn" id="loadDemoBtnHeader">Load Demo</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- Hero -->
+    <section class="hero" aria-label="Hero">
+      <div>
+        <div class="eyebrow">VisaBridge</div>
+        <h2>Get Your Visa Eligibility Snapshot in a Snap</h2>
+        <p>Deterministic, rule-based readiness checks for O-1A, EB-1A, EB-2 NIW, and H-1B - in minutes. This is not legal advice, This is a demo project.</p>
+        <div class="cta">
+          <button class="btn primary" id="getStartedBtn">Get Started</button>
+        </div>
+      </div>
+      <div class="hero-visual" aria-hidden="true">
+        <div class="hero-stat"><div class="hero-dot"></div><div><strong>No Guesswork</strong><br><span>Live scoring per track</span></div></div>
+        <div class="hero-stat"><div class="hero-dot"></div><div><strong>Built for The Future</strong><br><span>AI-friendly JSON export for LLMs</span></div></div>
+        <div class="hero-stat"><div class="hero-dot"></div><div><strong>Fast Evaluation</strong><br><span>Attorney Support Made Easier</span></div></div>
+      </div>
+    </section>
+
+    <main class="grid" role="main" id="main">
+      <!-- LEFT: Form -->
+      <div class="panel" aria-labelledby="form-title">
+        <div class="content">
+          <form id="form">
+            <!-- Profile & Dates -->
+            <section class="section" aria-label="Profile & Dates">
+              <h2 id="form-title">Profile & Dates</h2>
+              <p class="desc">Basic context to anchor evaluation.</p>
+              <div class="fields row-2">
+                <div class="field">
+                  <label for="optStart">OPT Start</label>
+                  <input id="optStart" name="optStart" type="date" />
+                  <div class="hint">YYYY-MM-DD</div>
+                </div>
+                <div class="field">
+                  <label for="optEnd">OPT End</label>
+                  <input id="optEnd" name="optEnd" type="date" />
+                  <div class="hint">YYYY-MM-DD</div>
+                </div>
+                <div class="field">
+                  <label for="stemEligible">STEM Extension Eligible</label>
+                  <select id="stemEligible" name="stemEligible">
+                    <option value="no">No</option>
+                    <option value="yes">Yes</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="hasMastersOrPhD">Highest Degree ≥ Master’s</label>
+                  <select id="hasMastersOrPhD" name="hasMastersOrPhD">
+                    <option value="no">No</option>
+                    <option value="yes">Yes</option>
+                  </select>
+                </div>
+              </div>
+            </section>
+
+            <!-- H-1B Fit -->
+            <section class="section" aria-label="H-1B Fit">
+              <h2>H-1B Fit</h2>
+              <p class="desc">Degree/role alignment and employer sponsorship.</p>
+              <div class="fields row-2">
+                <div class="field">
+                  <label for="degreeMajorMatch">Degree Matches Role</label>
+                  <select id="degreeMajorMatch" name="degreeMajorMatch">
+                    <option value="no">No</option>
+                    <option value="yes" selected>Yes</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="roleIsSpecialty">Specialty Occupation Role</label>
+                  <select id="roleIsSpecialty" name="roleIsSpecialty">
+                    <option value="no">No</option>
+                    <option value="yes" selected>Yes</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="employerSponsorship">Employer Will Sponsor</label>
+                  <select id="employerSponsorship" name="employerSponsorship">
+                    <option value="no" selected>No</option>
+                    <option value="yes">Yes</option>
+                  </select>
+                </div>
+              </div>
+            </section>
+
+            <!-- Publications & Recognition -->
+            <section class="section" aria-label="Publications & Recognition">
+              <h2>Publications & Recognition</h2>
+              <p class="desc">Signals for O-1A / EB-1A and supports NIW.</p>
+              <div class="fields row-2">
+                <div class="field"><label for="papers">Peer-reviewed Papers</label><input id="papers" type="number" min="0" value="0" /></div>
+                <div class="field"><label for="citations">Google Scholar Citations</label><input id="citations" type="number" min="0" value="0" /></div>
+                <div class="field"><label for="patents">Patents Granted</label><input id="patents" type="number" min="0" value="0" /></div>
+                <div class="field"><label for="intlAwards">International Awards</label><input id="intlAwards" type="number" min="0" value="0" /></div>
+                <div class="field"><label for="natAwards">National Awards</label><input id="natAwards" type="number" min="0" value="0" /></div>
+                <div class="field"><label for="majorMedia">Major Media Mentions</label><input id="majorMedia" type="number" min="0" value="0" /></div>
+                <div class="field"><label for="peerReview">Judging / Peer Review Invites</label><input id="peerReview" type="number" min="0" value="0" /></div>
+                <div class="field"><label for="selectiveMemberships">Selective Memberships</label><input id="selectiveMemberships" type="number" min="0" value="0" /></div>
+              </div>
+            </section>
+
+            <!-- Roles & Org Stature -->
+            <section class="section" aria-label="Roles & Organization Stature">
+              <h2>Roles & Organization Stature</h2>
+              <p class="desc">Supports critical role and compensation prongs.</p>
+              <div class="fields row-2">
+                <div class="field"><label for="leadRoles">Leadership / Critical Roles Held</label><input id="leadRoles" type="number" min="0" value="0" /></div>
+                <div class="field">
+                  <label for="companyRep">Employer Reputation Level</label>
+                  <select id="companyRep">
+                    <option value="local">Local</option>
+                    <option value="regional" selected>Regional</option>
+                    <option value="national">National</option>
+                    <option value="international">International</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="salaryPercentile">Compensation Percentile (approx)</label>
+                  <input id="salaryPercentile" type="number" min="0" max="100" value="50" />
+                  <div class="hint">Enter 0–100 (≥ 90 supports salary criterion)</div>
+                </div>
+              </div>
+            </section>
+
+            <!-- NIW specifics -->
+            <section class="section" aria-label="NIW Signals">
+              <h2>EB-2 NIW Signals</h2>
+              <p class="desc">Used for National Interest Waiver track.</p>
+              <div class="fields row-2">
+                <div class="field">
+                  <label for="endeavorImpact">Endeavor Impact Level</label>
+                  <select id="endeavorImpact">
+                    <option value="0">Local</option>
+                    <option value="1" selected>Regional</option>
+                    <option value="2">National</option>
+                    <option value="3">International</option>
+                  </select>
+                </div>
+                <div class="field"><label for="recommendationLetters">Recommendation Letters</label><input id="recommendationLetters" type="number" min="0" value="0" /></div>
+                <div class="field"><label for="teamLeadLetters">Team Lead / Executive Letters</label><input id="teamLeadLetters" type="number" min="0" value="0" /></div>
+                <div class="field"><label for="grants">Grants Won</label><input id="grants" type="number" min="0" value="0" /></div>
+              </div>
+            </section>
+          </form>
+        </div>
+      </div>
+
+      <!-- RIGHT: Snapshot -->
+      <aside class="panel summary" aria-label="Readiness Summary">
+        <div class="content">
+          <div class="eyebrow">Readiness</div>
+          <h2 style="margin:6px 0 6px 0;font-size:22px;letter-spacing:-.2px;color:#f1f4ff">Snapshot</h2>
+          <p class="muted" style="margin-top:0">Deterministic, transparent scoring by visa track. Click to expand.</p>
+
+          <details class="panel right-card" id="card-O1A" open>
+            <summary>
+              <span>
+                <strong>O-1A · Extraordinary Ability</strong><br />
+                <span class="muted" style="font-weight:400">Meet 3+ criteria with strong evidence.</span>
+              </span>
+              <span class="pill" id="pill-O1A">Early</span>
+            </summary>
+            <div class="content">
+              <div class="criteria-list" id="list-O1A"></div>
+              <div class="muted" id="counts-O1A" style="margin-top:8px;font-size:12px"></div>
+            </div>
+          </details>
+
+          <details class="panel right-card" id="card-EB1A">
+            <summary>
+              <span>
+                <strong>EB-1A · Extraordinary Ability (Immigrant)</strong><br />
+                <span class="muted" style="font-weight:400">Sustained acclaim; typically 3+ criteria.</span>
+              </span>
+              <span class="pill" id="pill-EB1A">Early</span>
+            </summary>
+            <div class="content">
+              <div class="criteria-list" id="list-EB1A"></div>
+              <div class="muted" id="counts-EB1A" style="margin-top:8px;font-size:12px"></div>
+            </div>
+          </details>
+
+          <details class="panel right-card" id="card-EB2NIW">
+            <summary>
+              <span>
+                <strong>EB-2 NIW · National Interest Waiver</strong><br />
+                <span class="muted" style="font-weight:400">Advanced degree; national importance; well-positioned.</span>
+              </span>
+              <span class="pill" id="pill-EB2NIW">Early</span>
+            </summary>
+            <div class="content">
+              <div class="criteria-list" id="list-EB2NIW"></div>
+              <div class="muted" id="counts-EB2NIW" style="margin-top:8px;font-size:12px"></div>
+            </div>
+          </details>
+
+          <details class="panel right-card" id="card-H1B">
+            <summary>
+              <span>
+                <strong>H-1B · Specialty Occupation</strong><br />
+                <span class="muted" style="font-weight:400">Degree match + specialty role + employer sponsorship.</span>
+              </span>
+              <span class="pill" id="pill-H1B">Early</span>
+            </summary>
+            <div class="content">
+              <div class="criteria-list" id="list-H1B"></div>
+              <div class="muted" id="counts-H1B" style="margin-top:8px;font-size:12px"></div>
+            </div>
+          </details>
+
+          <div class="side-actions">
+            <button class="btn primary" id="exportBtn2">Export JSON Brief</button>
+            <button class="btn outline" id="resetBtn2">Reset</button>
+            <button class="btn" id="loadDemoBtn3">Load Demo</button>
+          </div>
+          <div class="muted" style="margin-top:12px">Tip: share the JSON with an attorney for review.</div>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+<script>
+/* ---------- Minimal JS logic (unchanged functionality) ---------- */
+const $ = (id) => document.getElementById(id);
+
+const CRITERIA_LABELS = {
+  awards:"Major Awards / Prizes",
+  press:"Major Media Coverage",
+  contributions:"Original Contributions (Patents / High-impact Work)",
+  judging:"Judging / Peer Review",
+  critical_role:"Critical Role at Distinguished Org",
+  high_salary:"High Salary (≥ 90th percentile)",
+  memberships:"Selective Memberships",
+  authorship:"Authorship / Publications",
+  advanced_degree:"Advanced Degree",
+  national_importance:"Endeavor of National Importance",
+  well_positioned:"Well-positioned to Advance Endeavor",
+  record_of_success:"Record of Success",
+  degree_match:"Degree Matches Role",
+  specialty_role:"Specialty Occupation Role",
+  employer_ready:"Employer Will Sponsor"
+};
+
+function readProfile(){
+  const n = (id) => Math.max(0, Number($(id).value || 0));
+  const bool = (id) => ($(id).value === 'yes');
+  return {
+    optStart: $("optStart").value || "",
+    optEnd: $("optEnd").value || "",
+    stemEligible: bool("stemEligible"),
+    hasMastersOrPhD: bool("hasMastersOrPhD"),
+    papers: n("papers"),
+    citations: n("citations"),
+    patents: n("patents"),
+    intlAwards: n("intlAwards"),
+    natAwards: n("natAwards"),
+    majorMedia: n("majorMedia"),
+    peerReview: n("peerReview"),
+    selectiveMemberships: n("selectiveMemberships"),
+    leadRoles: n("leadRoles"),
+    companyRep: $("companyRep").value,
+    salaryPercentile: Math.min(100, Math.max(0, Number($("salaryPercentile").value || 0))),
+    endeavorImpact: Number($("endeavorImpact").value || 0),
+    recommendationLetters: n("recommendationLetters"),
+    teamLeadLetters: n("teamLeadLetters"),
+    grants: n("grants"),
+    degreeMajorMatch: bool("degreeMajorMatch"),
+    roleIsSpecialty: bool("roleIsSpecialty"),
+    employerSponsorship: bool("employerSponsorship")
+  };
+}
+
+const RULES = {
+  O1A: {
+    label: "O-1A · Extraordinary Ability",
+    minMet: 3,
+    criteria: {
+      awards: p => p.intlAwards>=1 || p.natAwards>=2,
+      press: p => p.majorMedia>=2,
+      contributions: p => p.patents>=1 || (p.papers>=3 && p.citations>=30),
+      judging: p => p.peerReview>=2,
+      critical_role: p => p.leadRoles>=1 && ["national","international"].includes(p.companyRep),
+      high_salary: p => p.salaryPercentile>=90,
+      memberships: p => p.selectiveMemberships>=1,
+      authorship: p => p.papers>=3
+    }
+  },
+  EB1A: {
+    label: "EB-1A · Extraordinary Ability (Immigrant)",
+    minMet: 3,
+    criteria: {
+      awards: p => p.intlAwards>=1 || p.natAwards>=2,
+      press: p => p.majorMedia>=3,
+      contributions: p => p.patents>=1 || (p.papers>=4 && p.citations>=60),
+      judging: p => p.peerReview>=3,
+      critical_role: p => p.leadRoles>=1 && ["national","international"].includes(p.companyRep),
+      high_salary: p => p.salaryPercentile>=90,
+      memberships: p => p.selectiveMemberships>=1,
+      authorship: p => p.papers>=4
+    }
+  },
+  EB2NIW: {
+    label: "EB-2 NIW · National Interest Waiver",
+    minMet: 3,
+    criteria: {
+      advanced_degree: p => p.hasMastersOrPhD,
+      national_importance: p => p.endeavorImpact>=2,
+      well_positioned: p => p.recommendationLetters>=3 || p.grants>=1 || p.teamLeadLetters>=1,
+      record_of_success: p => (p.papers + p.patents + p.majorMedia)>=3
+    }
+  },
+  H1B: {
+    label: "H-1B · Specialty Occupation",
+    minMet: 3,
+    criteria: {
+      degree_match: p => p.degreeMajorMatch,
+      specialty_role: p => p.roleIsSpecialty,
+      employer_ready: p => p.employerSponsorship
+    }
+  }
+};
+
+function strengthFrom(met, minMet){
+  if (met >= minMet) return "Strong";
+  if (met === minMet - 1) return "Developing";
+  return "Early";
+}
+function pillClassFor(str){
+  if (str === "Strong") return "pill success";
+  if (str === "Developing") return "pill warn";
+  return "pill error";
+}
+
+function renderTrack(key, profile){
+  const track = RULES[key];
+  let met = 0, missing = 0;
+  const statuses = {};
+  for (const [code, fn] of Object.entries(track.criteria)){
+    const ok = !!fn(profile);
+    statuses[code] = ok ? "met" : "missing";
+    ok ? met++ : missing++;
+  }
+  const s = strengthFrom(met, track.minMet);
+  const pill = $("pill-"+key);
+  pill.textContent = s;
+  pill.className = pillClassFor(s);
+
+  const list = $("list-"+key);
+  list.innerHTML = "";
+  for (const code of Object.keys(track.criteria)){
+    const item = document.createElement("div");
+    item.className = "criteria-item";
+    const name = document.createElement("span");
+    name.style.fontSize = "14px";
+    name.textContent = CRITERIA_LABELS[code] || code;
+
+    const badge = document.createElement("span");
+    badge.className = "pill " + (statuses[code]==="met" ? "success" : "error");
+    badge.textContent = statuses[code]==="met" ? "Met" : "Missing";
+
+    item.appendChild(name);
+    item.appendChild(badge);
+    list.appendChild(item);
+  }
+  $("counts-"+key).textContent = `${met} met · ${missing} missing`;
+}
+
+function evaluateAll(){
+  const profile = readProfile();
+  renderTrack("O1A", profile);
+  renderTrack("EB1A", profile);
+  renderTrack("EB2NIW", profile);
+  renderTrack("H1B", profile);
+  return profile;
+}
+
+function loadDemo(){
+  $("hasMastersOrPhD").value = "yes";
+  $("optStart").value = "2025-07-01";
+  $("optEnd").value = "2026-06-30";
+  $("stemEligible").value = "yes";
+
+  $("papers").value = 4;
+  $("citations").value = 85;
+  $("patents").value = 1;
+  $("intlAwards").value = 0;
+  $("natAwards").value = 2;
+  $("majorMedia").value = 2;
+  $("peerReview").value = 2;
+  $("selectiveMemberships").value = 1;
+
+  $("leadRoles").value = 1;
+  $("companyRep").value = "international";
+  $("salaryPercentile").value = 92;
+
+  $("endeavorImpact").value = 2;
+  $("recommendationLetters").value = 3;
+  $("teamLeadLetters").value = 1;
+  $("grants").value = 0;
+
+  $("degreeMajorMatch").value = "yes";
+  $("roleIsSpecialty").value = "yes";
+  $("employerSponsorship").value = "yes";
+  evaluateAll();
+}
+function resetAll(){
+  document.getElementById("form").reset();
+  $("degreeMajorMatch").value = "yes";
+  $("roleIsSpecialty").value = "yes";
+  $("companyRep").value = "regional";
+  $("endeavorImpact").value = 1;
+  $("salaryPercentile").value = 50;
+  evaluateAll();
+}
+function exportBrief(){
+  const profile = evaluateAll();
+  const tracks = {};
+  for (const k of Object.keys(RULES)){
+    const t = RULES[k];
+    let met = 0, statuses = {};
+    for (const [code, fn] of Object.entries(t.criteria)){
+      const ok = !!fn(profile);
+      statuses[code] = ok ? "met" : "missing";
+      if (ok) met++;
+    }
+    tracks[k] = {
+      label: t.label,
+      minMet: t.minMet,
+      strength: strengthFrom(met, t.minMet),
+      statuses
+    };
+  }
+  const payload = {
+    profile,
+    evaluation: tracks,
+    generatedAt: new Date().toISOString(),
+    disclaimer: "Educational tool only; not legal advice."
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type: "application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = `visabridge_brief_${Date.now()}.json`; a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* Wire up events (including NEW header buttons) */
+window.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("form").addEventListener("input", evaluateAll);
+  document.getElementById("form").addEventListener("change", evaluateAll);
+
+  const hook = (id, fn) => { const el = $(id); if (el) el.addEventListener("click", fn); };
+
+  // Hero & sidebar
+  hook("loadDemoBtn2", loadDemo);
+  hook("loadDemoBtn3", loadDemo);
+  hook("resetBtn", resetAll);
+  hook("resetBtn2", resetAll);
+
+  // Header (new)
+  hook("loadDemoBtnHeader", loadDemo);
+  hook("resetBtnHeader", resetAll);
+
+  // Export
+  hook("exportBtn2", exportBrief);
+
+  // Get Started behavior (used by hero + header)
+  const getStarted = () => {
+    document.getElementById("optStart").focus();
+    evaluateAll();
+    document.getElementById("form").scrollIntoView({behavior:"smooth", block:"start"});
+  };
+  hook("getStartedBtn", getStarted);
+  hook("getStartedBtnHeader", getStarted);
+
+  evaluateAll();
+});
+</script>
+</body>
+</html>

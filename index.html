@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Digital Space - Built for Hiring Teams</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: linear-gradient(270deg, #0f0c29, #302b63, #0f0c29);
+      background-size: 600% 600%;
+      animation: gradientShift 20s ease infinite;
+      overflow-x: hidden;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      padding: 40px 20px;
+      color: white;
+    }
+    canvas#starfield {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+    }
+    @keyframes gradientShift {
+      0% {background-position: 0% 50%;}
+      50% {background-position: 100% 50%;}
+      100% {background-position: 0% 50%;}
+    }
+    .container {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-wrap: wrap;
+      width: 100%;
+      max-width: 1200px;
+      justify-content: space-between;
+      align-items: center;
+      gap: 40px;
+    }
+    .message {
+      flex: 1;
+      max-width: 500px;
+      line-height: 1.6;
+      opacity: 0.85;
+    }
+    .message .intro {
+      font-weight: 800;
+      font-size: 4.0rem;
+      color: rgba(255,255,255,0.9);
+    }
+    .message p {
+      font-size: 1.5rem;
+      margin: 0 0 14px;
+      color: rgba(255,255,255,0.8);
+      line-height: 1.6;
+    }
+    .message .footnote {
+      font-size: 1.3rem;
+      font-weight: 400;
+      color: rgba(255,255,255,0.6);
+      margin-top: 10px;
+    }
+    .links {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 25px;
+      align-items: flex-end;
+      width: 100%;
+      max-width: 360px;
+    }
+    .links a {
+      padding: 20px 40px;
+      font-size: 1.2rem;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 16px;
+      color: white;
+      font-weight: 500;
+      text-decoration: none;
+      width: 100%;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(5px);
+    }
+    .links a:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: scale(1.05);
+    }
+    .mobile-warning {
+      display: none;
+    }
+    @media (max-width: 767px) {
+      .container, .links, .message {
+        display: none !important;
+      }
+      .mobile-warning {
+        display: flex !important;
+        z-index: 10;
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        padding: 40px;
+        background: linear-gradient(145deg, #0f0c29, #302b63, #0f0c29);
+        color: white;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        font-family: 'Outfit', sans-serif;
+        flex-direction: column;
+        font-size: 1.4rem;
+        line-height: 1.8;
+      }
+      .mobile-warning button {
+        margin-top: 20px;
+        padding: 12px 20px;
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.3);
+        border-radius: 12px;
+        color: white;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: background 0.3s ease;
+      }
+      .mobile-warning button:hover {
+        background: rgba(255,255,255,0.2);
+      }
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="starfield"></canvas>
+
+<div class="container">
+  <div class="message">
+    <p class="intro">Welcome,<br>Decision Makers</p>
+    <p>This digital space was created as a focused snapshot of what I do best, specifically for recruiters and hiring teams.</p>
+    <p class="footnote">And if it gets me one step closer to an offer letter… well, mission accomplished!</p>
+  </div>
+  <div class="links">
+    <a href="https://github.com/jilango">GitHub</a>
+    <a href="https://ieeexplore.ieee.org/document/10060602">AI/ML NLP Research Paper</a>
+    <a href="https://github.com/SRM-IST-KTR/disturbance-detection-in-messaging-apps-using-machine-learning-e5d7h9m7">Research Codebase</a>
+    <a href="https://github.com/jilango/crypto-react">CryptoBoard Codebase</a>
+    <a href="Frontend Portfolio Showcase.pdf">Fullstack Development Portfolio</a>
+  </div>
+</div>
+
+<div class="mobile-warning">
+  <p style="font-size: 1.6rem; font-weight: 600;">Welcome Decision Makers!</p>
+  <p style="font-size: 1.0rem;">Please open this page on a larger screen such as a Laptop or MacBook for the best viewing experience.</p>
+  <button onclick="shareToDevice()">AirDrop or Share To Device</button>
+</div>
+
+<script>
+const canvas = document.getElementById('starfield');
+const ctx = canvas.getContext('2d');
+let stars = [], planets = [];
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+for (let i = 0; i < 200; i++) {
+  stars.push({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    size: Math.random() * 1.5,
+    speed: Math.random() * 0.5
+  });
+}
+for (let i = 0; i < 5; i++) {
+  planets.push({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    size: 10 + Math.random() * 20,
+    speed: 0.1 + Math.random() * 0.2,
+    color: ['#a29bfe', '#81ecec', '#ff7675', '#ffeaa7'][Math.floor(Math.random() * 4)]
+  });
+}
+function animateStars() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = 'white';
+  stars.forEach(star => {
+    star.x -= star.speed;
+    if (star.x < 0) star.x = canvas.width;
+    ctx.beginPath();
+    ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  planets.forEach(planet => {
+    planet.x -= planet.speed;
+    if (planet.x + planet.size < 0) {
+      planet.x = canvas.width;
+      planet.y = Math.random() * canvas.height;
+    }
+    ctx.save();
+    ctx.shadowBlur = 20;
+    ctx.shadowColor = planet.color;
+    ctx.fillStyle = planet.color;
+    ctx.beginPath();
+    ctx.arc(planet.x, planet.y, planet.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  });
+
+  requestAnimationFrame(animateStars);
+}
+animateStars();
+
+// Cinematic zoom on page load
+gsap.from('.container', { scale: 0.95, opacity: 0, duration: 1.5, ease: "power2.out" });
+
+function shareToDevice() {
+  if (navigator.share) {
+    navigator.share({
+      title: 'My Digital Space',
+      text: 'Here’s a focused snapshot of my work - best viewed on a larger screen.',
+      url: window.location.href
+    }).catch(err => console.log('Share canceled or failed', err));
+  } else {
+    alert('Sharing is not supported on this device.');
+  }
+}
+</script>
+
+</body>
+</html>
